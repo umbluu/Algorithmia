@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Algorithmia</title>
+
+    <!-- <script src="https://unpkg.com/vue-multiselect@2.1.0"></script> -->
+    <link rel="stylesheet" href="https://unpkg.com/vue-multiselect@2.1.0/dist/vue-multiselect.min.css">
+</head>
+
+<body>
+    <div id="app">
+        <h1>Hello</h1>
+        <input type="text" v-model="name">
+        <button @click="sendHello">Send</button>
+        {{ helloResponse }}
+
+        <hr>
+
+        <h1>Nudity</h1>
+        <input type="text" v-model="imageUrl">
+        <button @click="sendImage">Check</button>
+        <p>Image contains nudity? {{ nudityResponse }}</p>
+        <p>Confidence: {{ nudityConfidence }} %</p>
+
+        <hr>
+
+        <h1>Language</h1>
+        <input type="text" v-model="sentence">
+        <button @click="sendText">Check</button>
+
+        <p v-show="languageResponse">Detected language: {{languageResponse}}</p>
+        <p v-show="languageConfidence">Confidence: {{languageConfidence}} %</p>
+        <!-- <div v-if="typeof languageResponse != 'array'"></div> -->
+
+        <ul v-if="typeof languageResponse === 'array'">
+            <li v-for="result in languageResponse">{{JSON.stringify(result)}}</li>
+        </ul>
+
+        <hr>
+
+        <h1>Word Frequency Counter</h1>
+        <textarea cols="60" rows="5" v-model="input" style="resize: none;"></textarea><br>
+        <button @click="sendFrequency">Send</button>
+        <ul>
+            <li v-for="(value,key) in words">
+                {{key}} - {{value}}
+            </li>
+        </ul>
+
+        <hr>
+
+        <h1>Roommate Finder</h1>
+        <div v-for="(roommate, index) in roommates">
+
+                {{ roommate.name }}
+
+                <multiselect v-model="selectedRoommates[roommate.name]"
+                             :options="getRoommateOptions(roommate.name)" 
+                             :multiple="true" 
+                             :clear-on-select="false"
+                            placeholder="Pick some" 
+                            label="name" track-by="name" 
+                            :preselect-first="false">
+                </multiselect>
+                
+        </div>
+
+        <!-- {{roommateResults}} -->
+
+
+        <ul>
+            <li v-for="(value,key) in roommateResults">
+                {{key}} - {{value}}
+            </li>
+        </ul>
+
+        <!-- <table>
+            <tr>
+                <th>Roommate</th>
+                <th>Match</th>
+            </tr>
+            <tr v-for="(group, i) in roommateResults">
+                <td></td>
+                <td></td>
+            </tr>
+        </table> -->
+        <!-- <pre class="language-json"><code>{{ selectedRoommates }}</code></pre> -->
+        <button @click="btnFindRoommates">Find Roommates</button>
+
+
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/vue-multiselect@2.1.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.18.0/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.11/lodash.min.js"></script>
+    <script>
+
+
+    </script>
+    <script>
+        var app = new Vue({
+            el: '#app',
+            components: {
+                Multiselect: VueMultiselect.default
+            },
+            data: {
+                name: 'Andre',
+                helloResponse: null,
+                imageUrl: 'https://images-na.ssl-images-amazon.com/images/I/71ZKzPimbwL._SY450_.jpg',
+                nudityResponse: null,
+                nudityConfidence: null,
+                sentence: 'Sillahan tapahtua saisihan ymmartaa ne kevaalla he ja saastaen. Vai olin nyt ela olet otti tama saat eiko sen. Taskuun lahoisi vai olevien vai opastaa tai kiihtya. Vuodeksi nae mahdatte vai loi myrskysi lentavat han yltymaan. Muuhunkaan vietavaksi suurtakaan vastapaata jos ela tuo. Ota vai selvalla pettymys paikkaan ela ryypatty jaa kaivanut. Puhuttu ai varmaan ja he tulleet ne rikkaan. Tarvitsen tassakaan jaa itselleen antautuen rahasumma yha. ',
+                textLanguage: null,
+                languageResponse: null,
+                languageConfidence: null,
+                input: 'Certainty listening no no behaviour existence assurance situation is. Because add why not esteems amiable him.',
+                words: [],
+                roommateResults: null,
+                selectedRoommates: {
+                    "Charlie": [{"name": "Peter"}, {"name": "Paul"}, {"name": "Sam"}, {"name": "Kelly"}, {"name": "Elise"}],
+                    "Peter": [{"name": "Kelly"}, {"name": "Elise"}, {"name": "Sam"}, {"name": "Paul"}, {"name": "Charlie"}],
+                    "Elise": [{"name": "Peter"}, {"name": "Sam"}, {"name": "Kelly"}, {"name": "Charlie"}, {"name": "Paul"}],
+                    "Paul": [{"name": "Elise"}, {"name": "Charlie"}, {"name": "Sam"}, {"name": "Peter"}, {"name": "Kelly"}],
+                    "Kelly": [{"name": "Peter"}, {"name": "Charlie"}, {"name": "Sam"}, {"name": "Elise"}, {"name": "Paul"}],
+                    "Sam": [{"name": "Charlie"}, {"name": "Paul"}, {"name": "Kelly"}, {"name": "Elise"}, {"name": "Peter"}]
+                },
+                roommates: [
+                    {name: 'Charlie'},
+                    {name: 'Peter'},
+                    {name: 'Paul'},
+                    {name: 'Sam'},
+                    {name: 'Kelly'},
+                    {name: 'Elise'},
+                ]
+            },
+            methods: {
+                sendHello: function () {
+                    axios.get('hello/' + this.name)
+                        .then(function (response) {
+                            app.helloResponse = response.data.result
+                        })
+                },
+                sendImage: function () {
+                    axios.post('/nudity', {
+                            url: app.imageUrl
+                        })
+                        .then(function (response) {
+                            app.nudityResponse = response.data.result.nude
+                            app.nudityConfidence = response.data.result.confidence.toFixed(2) * 100;
+                            console.log(response.data.result);
+                        })
+                },
+                sendText: function () {
+                    axios.post('detectLanguage', {
+                            sentence: app.sentence
+                        })
+                        .then(function (response) {
+
+                            app.languageResponse = response.data.result[0].language;
+                            app.languageConfidence = response.data.result[0].confidence;
+                            console.log(response.data.result);
+
+                        })
+                },
+                sendFrequency: function () {
+                    axios.post('wordFrequencyCounter', {
+                            input: this.input
+                        })
+                        .then(function (response) {
+                            console.log(response.data);
+                            app.words = response.data.result;
+                        })
+                },
+                getRoommateOptions: function (undesiredRoommate) {
+                    return this.roommates.filter(function(roommate) {
+                        return roommate.name !== undesiredRoommate
+                    });
+                },
+
+                btnFindRoommates: function() {
+                    var preferences = {};
+
+                    _.map(app.selectedRoommates, function (prefs, roommate) {
+                        preferences[roommate] = _.reduce(prefs, function (result, value, key) {
+                            result.push(value.name);
+                            return result;
+                        }, []);
+                    });
+
+                    axios.post('find-roommates', {preferences})
+                        .then(function (response) {
+                            console.log(response.data);
+                            app.roommateResults = response.data.result
+                        })
+                },
+            }
+        })
+    </script>
+
+</body>
+
+</html>
